@@ -45,7 +45,7 @@ jobs:
 
       - name: Merge main changes
         run: |
-           git pull --no-rebase origin main
+           git pull --no-rebase origin iedame
 
       - name: Migrate result files to trunk directory
         run: |
