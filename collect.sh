@@ -7,7 +7,7 @@ export NIXPKGS_BRANCH="${NIXPKGS_BRANCH:-trunk}"
 
 [[ ! -s result.html ]] &&
   curl -L \
-   -A "nixpkgs-failure-notify (reach sigmanificient)" \
+   -A "nixpkgs-failure-notify (reach iedame)" \
    -o result.html \
    "https://hydra.nixos.org/jobset/nixpkgs/${NIXPKGS_BRANCH}/latest-eval?full=1"
 
