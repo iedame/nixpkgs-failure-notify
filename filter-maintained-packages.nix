@@ -16,6 +16,7 @@ let
   ];
 
   gh = "iedame";
+  extraPackages = import ./extra-packages.nix;
 in let
   lookupAttrPath = pathStr:
     builtins.foldl'
@@ -42,4 +43,17 @@ in let
 
     in evald.success && evald.value;
 
-in builtins.filter isMaintainer failures-packed
+  isExtraPkg =
+    p:
+    let
+      evald = builtins.tryEval (
+        pkgs.lib.pipe p [
+          builtins.head
+          lookupAttrPath
+          (p: pkgs.lib.any (extra: (p.pname or "") == extra) extraPackages)
+        ]
+      );
+    in
+    evald.success && evald.value;
+
+in builtins.filter (p: isMaintainer p || isExtraPkg p) failures-packed
