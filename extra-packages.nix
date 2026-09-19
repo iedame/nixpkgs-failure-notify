@@ -6,6 +6,7 @@
   "hydra-check"
   "img2pdf"
   "keepassxc"
+  "libreoffice"
   "neovim"
   "nh"
   "nix-diff"
