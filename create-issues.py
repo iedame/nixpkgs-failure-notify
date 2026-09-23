@@ -12,11 +12,27 @@ def run_gh(args, gh_token):
 
     return subprocess.run(
         ["gh", *args],
-        check=True,
+        check=False,
         capture_output=True,
         text=True,
         env=env,
     )
+
+    if result.returncode != 0:
+        print("gh command failed:")
+        print(" ".join(["gh", *args]))
+        print("stdout:")
+        print(result.stdout)
+        print("stderr:")
+        print(result.stderr)
+        raise subprocess.CalledProcessError(
+            result.returncode,
+            result.args,
+            result.stdout,
+            result.stderr,
+        )
+
+    return result
 
 def find_issue_by_title(repo, title, gh_token):
     result = run_gh(
