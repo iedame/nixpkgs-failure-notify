@@ -7,6 +7,59 @@ import json
 import subprocess
 import os
 
+def run_gh(args, gh_token):
+    env = {**os.environ, "GH_TOKEN": gh_token}
+
+    return subprocess.run(
+        ["gh", *args],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+def find_issue_by_title(repo, title, gh_token):
+    result = run_gh(
+        [
+            "issue",
+            "list",
+            "--repo",
+            repo,
+            "--state",
+            "all",
+            "--search",
+            f'"{title}" in:title',
+            "--limit",
+            "10",
+            "--json",
+            "number",
+            "title",
+        ],
+        gh_token,
+    )
+
+    issues = json.loads(result.stdout)
+
+    for issue in issues:
+        if issue["title"] == title:
+            return issue["number"]
+
+    return None
+
+def add_issue_comment(repo, issue_number, body, gh_token):
+    run_gh(
+        [
+            "issue",
+            "comment",
+            str(issue_number),
+            "--repo",
+            repo,
+            "--body",
+            body,
+        ],
+        gh_token,
+    )
+
 def create_issues(branch="trunk"):
     with open(f"results/{branch}/concerned-failures.json") as f:
         rows = json.load(f)
@@ -52,13 +105,26 @@ def create_issues(branch="trunk"):
 
         title = f"[{branch}] {pkg} build failures"
 
+        issue_number = find_issue_by_title(repo, title, gh_token)
+
+        if issue_number is not None:
+            print(f"Updating existing issue #{issue_number}: {title}")
+            add_issue_comment(repo, issue_number, body, gh_token)
+            continue
+
         print(f"Creating issue: {title}")
-        subprocess.run([
-            "gh", "issue", "create",
-            "--repo", repo,
-            "--title", title,
-            "--body", body,
-            ], check=True, env={"GITHUB_TOKEN": gh_token}
+        run_gh(
+            [
+                "issue",
+                "create",
+                "--repo",
+                repo,
+                "--title",
+                title,
+                "--body",
+                body,
+            ],
+            gh_token,
         )
 
 if __name__ == "__main__":
