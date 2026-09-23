@@ -49,8 +49,7 @@ def find_issue_by_title(repo, branch, pkg, gh_token):
             "--limit",
             "10",
             "--json",
-            "number",
-            "title",
+            "number,title",
         ],
         gh_token,
     )
