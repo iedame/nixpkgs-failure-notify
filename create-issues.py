@@ -10,7 +10,7 @@ import os
 def run_gh(args, gh_token):
     env = {**os.environ, "GH_TOKEN": gh_token}
 
-    return subprocess.run(
+    result = subprocess.run(
         ["gh", *args],
         check=False,
         capture_output=True,
@@ -25,16 +25,17 @@ def run_gh(args, gh_token):
         print(result.stdout)
         print("stderr:")
         print(result.stderr)
+
         raise subprocess.CalledProcessError(
-            result.returncode,
-            result.args,
-            result.stdout,
-            result.stderr,
+            returncode=result.returncode,
+            cmd=result.args,
+            output=result.stdout,
+            stderr=result.stderr,
         )
 
     return result
 
-def find_issue_by_title(repo, title, gh_token):
+def find_issue_by_title(repo, branch, pkg, gh_token):
     result = run_gh(
         [
             "issue",
@@ -44,7 +45,7 @@ def find_issue_by_title(repo, title, gh_token):
             "--state",
             "all",
             "--search",
-            f'"{title}" in:title',
+            f"{branch} {pkg} in:title",
             "--limit",
             "10",
             "--json",
@@ -56,8 +57,10 @@ def find_issue_by_title(repo, title, gh_token):
 
     issues = json.loads(result.stdout)
 
+    expected_title = f"[{branch}] {pkg} build failures"
+
     for issue in issues:
-        if issue["title"] == title:
+        if issue["title"] == expected_title:
             return issue["number"]
 
     return None
@@ -82,7 +85,6 @@ def create_issues(branch="trunk"):
 
     with open(f"previous-{branch}.json") as f:
         known_fails = [r[0] for r in json.load(f)]
-
 
     SUPPORTED_SYSTEMS = tuple(
         f"{arch}-{sys}"
@@ -121,7 +123,7 @@ def create_issues(branch="trunk"):
 
         title = f"[{branch}] {pkg} build failures"
 
-        issue_number = find_issue_by_title(repo, title, gh_token)
+        issue_number = find_issue_by_title(repo, branch, pkg, gh_token)
 
         if issue_number is not None:
             print(f"Updating existing issue #{issue_number}: {title}")
