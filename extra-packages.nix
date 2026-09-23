@@ -1,4 +1,5 @@
 [
+  "aerogramme"
   "archisteamfarm"
   "element-desktop"
   "fastfetch"
