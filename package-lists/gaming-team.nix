@@ -1,3 +1,4 @@
 [
   "freedink"
+  "supertuxkart-server"
 ]
