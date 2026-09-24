@@ -40,7 +40,7 @@
           collect-multiple
           fast-hydra-parser
           hydra-parser
-          create-issues
+          sync-issues
         ];
 
         meta.mainProgram = "collect-multiple.sh";
@@ -67,7 +67,7 @@
         };
       };
 
-      create-issues = python-script "create-issues.py" ./create-issues.py;
+      sync-issues = python-script "sync-issues.py" ./sync-issues.py;
 
       collect = pkgs.writeShellApplication {
         name = "collect.sh";

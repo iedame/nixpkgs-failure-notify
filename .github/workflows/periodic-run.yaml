@@ -86,10 +86,10 @@ jobs:
         run: |
           nix run github:${{ github.repository }}
 
-      - name: Open issue for new build failures
+      - name: Sync issues for build failures
         run: |
          GH_REPOSITORY=${{ github.repository }} \
-           GH_TOKEN=${{ secrets.GITHUB_TOKEN }} python create-issues.py
+           GH_TOKEN=${{ secrets.GITHUB_TOKEN }} python sync-issues.py
 
       - name: Cleanup
         run: |
