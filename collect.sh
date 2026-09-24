@@ -36,7 +36,7 @@ $fhp_cmd result.html | $hydra_to_cvs_cmd
 
 # --argstr doesn't work for some reason
 nix eval --json --impure --expr "
-  import ./filter-maintained-packages.nix {
+  import ./filter-packages.nix {
     branch = \"${NIXPKGS_BRANCH}\";
   }" > "results/${NIXPKGS_BRANCH}/concerned-failures.json"
 rm result.html
