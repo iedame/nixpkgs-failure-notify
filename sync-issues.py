@@ -7,6 +7,7 @@ import json
 import os
 import subprocess
 
+
 def run_gh(args, gh_token):
     env = {**os.environ, "GH_TOKEN": gh_token}
 
@@ -34,6 +35,7 @@ def run_gh(args, gh_token):
         )
 
     return result
+
 
 def find_issue_by_title(repo, branch, pkg, gh_token):
     result = run_gh(
@@ -63,6 +65,7 @@ def find_issue_by_title(repo, branch, pkg, gh_token):
 
     return None
 
+
 def close_issue(repo, issue_number, gh_token):
     run_gh(
         [
@@ -75,6 +78,7 @@ def close_issue(repo, issue_number, gh_token):
         gh_token,
     )
 
+
 def reopen_issue(repo, issue_number, gh_token):
     run_gh(
         [
@@ -86,6 +90,7 @@ def reopen_issue(repo, issue_number, gh_token):
         ],
         gh_token,
     )
+
 
 def add_issue_comment(repo, issue_number, body, gh_token):
     run_gh(
@@ -101,14 +106,15 @@ def add_issue_comment(repo, issue_number, body, gh_token):
         gh_token,
     )
 
+
 def sync_issues(branch="trunk"):
     with open(f"results/{branch}/concerned-failures.json") as f:
         rows = json.load(f)
 
     with open(f"previous-{branch}.json") as f:
-        known_fails = {row[0] for row in json.load(f)}
+        previous_failures = {row[0] for row in json.load(f)}
 
-    current_fails = {row[0] for row in rows}
+    current_failures = {row[0] for row in rows}
 
     supported_systems = tuple(
         f"{arch}-{system}"
@@ -122,7 +128,7 @@ def sync_issues(branch="trunk"):
     gh_token = os.getenv("GH_TOKEN")
     assert gh_token is not None
 
-    recovered_packages = known_fails - current_fails
+    recovered_packages = previous_failures - current_failures
 
     for pkg in recovered_packages:
         issue = find_issue_by_title(repo, branch, pkg, gh_token)
@@ -142,8 +148,8 @@ def sync_issues(branch="trunk"):
     for row in rows:
         pkg = row[0]
 
-        if pkg in known_fails:
-            print("Skipping", pkg, "(known)")
+        if pkg in previous_failures:
+            print("Skipping", pkg, "(previously failed)")
             continue
 
         failures = [
@@ -191,6 +197,7 @@ def sync_issues(branch="trunk"):
             ],
             gh_token,
         )
+
 
 if __name__ == "__main__":
     for failure_path in glob.glob("results/*/concerned-failures.json"):
