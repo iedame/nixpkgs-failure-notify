@@ -4,8 +4,8 @@ from pathlib import PurePath
 
 import glob
 import json
-import subprocess
 import os
+import subprocess
 
 def run_gh(args, gh_token):
     env = {**os.environ, "GH_TOKEN": gh_token}
@@ -49,20 +49,43 @@ def find_issue_by_title(repo, branch, pkg, gh_token):
             "--limit",
             "10",
             "--json",
-            "number,title",
+            "number,title,state",
         ],
         gh_token,
     )
 
     issues = json.loads(result.stdout)
-
     expected_title = f"[{branch}] {pkg} build failures"
 
     for issue in issues:
         if issue["title"] == expected_title:
-            return issue["number"]
+            return issue
 
     return None
+
+def close_issue(repo, issue_number, gh_token):
+    run_gh(
+        [
+            "issue",
+            "close",
+            str(issue_number),
+            "--repo",
+            repo,
+        ],
+        gh_token,
+    )
+
+def reopen_issue(repo, issue_number, gh_token):
+    run_gh(
+        [
+            "issue",
+            "reopen",
+            str(issue_number),
+            "--repo",
+            repo,
+        ],
+        gh_token,
+    )
 
 def add_issue_comment(repo, issue_number, body, gh_token):
     run_gh(
@@ -83,11 +106,13 @@ def create_issues(branch="trunk"):
         rows = json.load(f)
 
     with open(f"previous-{branch}.json") as f:
-        known_fails = [r[0] for r in json.load(f)]
+        known_fails = {row[0] for row in json.load(f)}
 
-    SUPPORTED_SYSTEMS = tuple(
-        f"{arch}-{sys}"
-        for sys in ("linux", "darwin")
+    current_fails = {row[0] for row in rows}
+
+    supported_systems = tuple(
+        f"{arch}-{system}"
+        for system in ("linux", "darwin")
         for arch in ("x86_64", "aarch64")
     )
 
@@ -97,17 +122,34 @@ def create_issues(branch="trunk"):
     gh_token = os.getenv("GH_TOKEN")
     assert gh_token is not None
 
+    recovered_packages = known_fails - current_fails
+
+    for pkg in recovered_packages:
+        issue = find_issue_by_title(repo, branch, pkg, gh_token)
+
+        if issue is None:
+            print(f"No issue found for recovered package: {pkg}")
+            continue
+
+        if issue["state"] == "OPEN":
+            print(f"Closing resolved issue #{issue['number']}: {pkg}")
+            close_issue(repo, issue["number"], gh_token)
+        else:
+            print(f"Issue #{issue['number']} is already closed: {pkg}")
 
     print("Processing", len(rows), "items")
+
     for row in rows:
         pkg = row[0]
+
         if pkg in known_fails:
             print("Skipping", pkg, "(known)")
             continue
 
         failures = [
-            f"- [ ] `{plat}`: [log](https://hydra.nixos.org/build/{build_id}/log)"
-            for plat, build_id in zip(SUPPORTED_SYSTEMS, row[1:])
+            f"- [ ] `{platform}`: "
+            f"[log](https://hydra.nixos.org/build/{build_id}/log)"
+            for platform, build_id in zip(supported_systems, row[1:])
             if build_id
         ]
 
@@ -121,15 +163,21 @@ def create_issues(branch="trunk"):
         )
 
         title = f"[{branch}] {pkg} build failures"
+        issue = find_issue_by_title(repo, branch, pkg, gh_token)
 
-        issue_number = find_issue_by_title(repo, branch, pkg, gh_token)
+        if issue is not None:
+            issue_number = issue["number"]
 
-        if issue_number is not None:
+            if issue["state"] == "CLOSED":
+                print(f"Reopening resolved issue #{issue_number}: {title}")
+                reopen_issue(repo, issue_number, gh_token)
+
             print(f"Updating existing issue #{issue_number}: {title}")
             add_issue_comment(repo, issue_number, body, gh_token)
             continue
 
         print(f"Creating issue: {title}")
+
         run_gh(
             [
                 "issue",
