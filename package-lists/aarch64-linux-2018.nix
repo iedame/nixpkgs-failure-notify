@@ -1,0 +1,4 @@
+[
+  "gradm"
+  "haskellPackages.cpython"
+]
