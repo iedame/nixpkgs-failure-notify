@@ -1,0 +1,10 @@
+[
+  "haskellPackages.hlibgit2"
+  "haskellPackages.rdtsc"
+  "haskellPackages.rdtsc-enolan"
+  "linuxKernel.packages.linux_6_1.mbp2018-bridge-drv"
+  "linuxPackages.mbp2018-bridge-drv"
+  "mspds"
+  "rappel"
+  "xsnow"
+]

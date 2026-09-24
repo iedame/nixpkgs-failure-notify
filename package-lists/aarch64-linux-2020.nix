@@ -1,0 +1,3 @@
+[
+  "haskellPackages.freetype2"
+]
