@@ -101,7 +101,7 @@ def add_issue_comment(repo, issue_number, body, gh_token):
         gh_token,
     )
 
-def create_issues(branch="trunk"):
+def sync_issues(branch="trunk"):
     with open(f"results/{branch}/concerned-failures.json") as f:
         rows = json.load(f)
 
@@ -195,4 +195,4 @@ def create_issues(branch="trunk"):
 if __name__ == "__main__":
     for failure_path in glob.glob("results/*/concerned-failures.json"):
         branch = PurePath(failure_path).parts[-2]
-        create_issues(branch=branch)
+        sync_issues(branch=branch)
