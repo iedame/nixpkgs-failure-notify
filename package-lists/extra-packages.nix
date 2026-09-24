@@ -34,5 +34,4 @@
   "syncthing"
   "tailscale"
   "telegram-desktop"
-  "varnish"
 ]
