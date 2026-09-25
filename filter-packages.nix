@@ -46,13 +46,15 @@ let
             packageLists.maintainers
       ) maintainers;
 
-  isExtraPackage = package:
-    builtins.elem
+  isExtraPackage = packagePath: package:
+    builtins.elem packagePath packageLists.extraPackages
+    || builtins.elem
       (package.pname or "")
       packageLists.extraPackages;
 
   isConcernedFailure = failure:
     let
+      packagePath = builtins.head failure;
       evaluated = builtins.tryEval (
         let
           package = getPackage failure;
@@ -60,7 +62,7 @@ let
           package != null
           && (
             isMaintainedByConfiguredUser package
-            || isExtraPackage package
+            || isExtraPackage packagePath package
           )
       );
     in
